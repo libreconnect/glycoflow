@@ -7,6 +7,12 @@ on:
         description: 'Release version'
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: 'Release version'
+        required: true
+        type: string
     
 
 # Update Chart
