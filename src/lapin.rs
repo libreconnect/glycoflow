@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
 use lapin::{auth::Credentials, Channel, Connection, ConnectionProperties};
 
 pub struct LapinClient {
     pub conn: Connection,
-    pub channel: Channel,
+    pub channel: Arc<Channel>,
 }
 
 impl LapinClient {
@@ -20,6 +22,7 @@ impl LapinClient {
         let conn = Connection::connect(&uri, ConnectionProperties::default()).await?;
 
         let channel = conn.create_channel().await?;
+        let channel = Arc::new(channel);
 
         Ok(Self { conn, channel })
     }

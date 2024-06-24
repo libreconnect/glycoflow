@@ -6,7 +6,7 @@ pub struct Env {
     pub host: String,
     #[clap(env)]
     pub port: u16,
-    
+
     #[clap(env)]
     pub rabbitmq_url: String,
     #[clap(env)]

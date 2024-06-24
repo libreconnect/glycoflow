@@ -6,12 +6,14 @@ use clap::Parser;
 use database::Database;
 use dotenv::dotenv;
 use env::Env;
+use handler::listen_queue;
 use health::{health_controller, health_service::HealthService};
 use lapin::LapinClient;
 use tracing::info;
 
 mod database;
 mod env;
+mod handler;
 mod health;
 mod lapin;
 
@@ -24,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr_in = format!("{}:{}", env.host, env.port);
 
     let creds = Credentials::new(env.rabbitmq_user, env.rabbitmq_password);
-    let _lapin = LapinClient::new(env.rabbitmq_url, env.rabbitmq_port, creds).await?;
+    let lapin = LapinClient::new(env.rabbitmq_url, env.rabbitmq_port, creds).await?;
     let database = Database::new(
         env.postgres_user,
         env.postgres_password,
@@ -38,6 +40,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let health_service = Arc::new(HealthService::new(pool.clone()));
 
     info!("Starting server at: {}", addr_in);
+
+    tokio::spawn(listen_queue("test_queue", lapin.channel.clone()));
 
     HttpServer::new(move || {
         App::new()
