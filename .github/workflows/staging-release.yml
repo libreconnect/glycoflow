@@ -7,6 +7,20 @@ on:
         description: 'Release version'
         required: true
         type: string
+    secrets:
+      PAT:
+        description: 'Personal Access Token'
+        required: true
+      CONTAINER_REGISTRY_USERNAME:
+        description: 'Container Registry Username'
+        required: true
+      CONTAINER_REGISTRY_TOKEN:
+        description: 'Container Registry Password'
+        required: true
+      CONTAINER_REGISTRY_ENDPOINT:
+        description: 'Container Registry Endpoint'
+        required: true
+      
   workflow_dispatch:
     inputs:
       release-version:
@@ -99,6 +113,7 @@ jobs:
       build-args: ""
       tag: ${{ inputs.release-version }}
       repository: libreconnect/glycoflow
+    secrets: inherit
   create-release:
     runs-on: ubuntu-latest
     needs: [build-and-push]
