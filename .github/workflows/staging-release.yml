@@ -112,7 +112,7 @@ jobs:
       dockerfile: Dockerfile
       build-args: ""
       tag: ${{ inputs.release-version }}
-      repository: libreconnect/glycoflow
+      repository: "libreconnect/glycoflow"
     secrets: inherit
   create-release:
     runs-on: ubuntu-latest
