@@ -26,4 +26,8 @@ impl LapinClient {
 
         Ok(Self { conn, channel })
     }
+
+    pub async fn close(&self) {
+        self.conn.close(200, "Goodbye").await.unwrap();
+    }
 }
