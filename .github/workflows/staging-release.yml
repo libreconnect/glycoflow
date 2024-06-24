@@ -21,16 +21,62 @@ on:
 # Sync Infrastructure
 
 jobs:
+  # update-helmfile:
+  #   uses: libreconnect/actions/.github/workflows/update-helmfile.yml@main
+  #   with:
+  #     environment: "staging"
+  #     release-version: ${{ inputs.release-version }}
+  #     repository: libreconnect/glycoflow
+  #   secrets: inherit
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+        with:
+          toolchain: nightly
+          components: rustfmt
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1.8.0
+        with:
+          toolchain: nightly
+          components: clippy
+      - name: Run clippy
+        run: cargo clippy --all -- -D warnings
   update-helmfile:
-    uses: libreconnect/actions/.github/workflows/update-helmfile.yml@main
-    with:
-      environment: staging
-      release-version: ${{ inputs.release-version }}
-      repository: libreconnect/glycoflow
-    secrets: inherit
+    runs-on: ubuntu-latest
+    needs: [fmt, clippy]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: libreconnect/glycoflow
+          ref: main
+          token: ${{ secrets.PAT }}
+      - name: Update helmfile staging
+        run: |
+          VERSION="${{ inputs.release-version }}"
+          echo "Version de staging qui sera déployé sur le helmfile: $VERSION"
+          yq -ie ".image.tag=\"$VERSION\"" ./kubernetes/helmfiles/staging/values.yml
+      - name: Commit changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add kubernetes/helmfiles/staging/values.yml
+          git commit -m "Update staging values.yml to ${{ inputs.release-version }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
   tag-release:
     runs-on: ubuntu-latest
-    needs: [update-helmfile]
+    needs: [update-helmfile, fmt, clippy]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,9 +90,18 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a ${{ inputs.release-version }} -m "Tagging ${{ inputs.release-version }}"
           git push origin ${{ inputs.release-version }}
+  build-and-push:
+    uses: libreconnect/actions/.github/workflows/build-and-push.yml@main
+    needs: [update-helmfile, tag-release, fmt, clippy]
+    with:
+      image-name: libreconnect/glycoflow
+      dockerfile: Dockerfile
+      build-args: ""
+      tag: ${{ inputs.release-version }}
+      repository: libreconnect/glycoflow
   create-release:
     runs-on: ubuntu-latest
-    needs: [update-helmfile, tag-release]
+    needs: [build-and-push]
     steps:
       - name: Create Release
         id: create_release
@@ -59,11 +114,4 @@ jobs:
           release_name: Release ${{ inputs.release-version }}
           draft: false
           prerelease: true
-  # build-and-push:
-  #   uses: libreconnect/actions/.github/workflows/build-and-push.yml@main
-  #   needs: [create-release, update-helmfile]
-  #   with:
-  #     image-name: libreconnect/glycoflow
-  #     dockerfile: Dockerfile
-  #     build-args: ""
-  #     tag: main
+
