@@ -91,7 +91,7 @@ jobs:
           git tag -a ${{ inputs.release-version }} -m "Tagging ${{ inputs.release-version }}"
           git push origin ${{ inputs.release-version }}
   build-and-push:
-    uses: libreconnect/actions/.github/workflows/build-and-push.yml@main
+    uses: libreconnect/actions/.github/workflows/docker-build-push.yml@main
     needs: [update-helmfile, tag-release, fmt, clippy]
     with:
       image-name: libreconnect/glycoflow
