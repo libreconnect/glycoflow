@@ -8,11 +8,12 @@ use sqlx::PgPool;
 use tracing::info;
 
 use database::Database;
-use encryptor::Encryptor;
 use env::Env;
 use handler::listen_queue;
 use health::{health_controller, health_service::HealthService};
 use lapin::LapinClient;
+
+use crate::encryptor::Encryptor;
 
 mod database;
 mod encryptor;
@@ -82,7 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
       .await?;
 
   // tokio::spawn(async move {
-  //   let _ = listen_queue("glycoflow_register_access_token", lapin.channel.clone(), pool.clone(), encryptor).await;
+  //   let _ = listen_queue("glycoflow_register_access_token", lapin.channel.clone(), pool.clone(), services).await;
   // });
 
   HttpServer::new(move || {

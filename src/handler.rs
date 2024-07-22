@@ -10,7 +10,7 @@ use sqlx::PgPool;
 use tracing::info;
 
 use crate::{
-  encryptor::Encryptor,
+  Encryptor,
   handlers::{
     command_create_access_token::{create_access_token, MessageCreateAccessToken},
     command_fetch_once::{fetch_once, MessageFetchOnce},
